@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { auth } from "../utils/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 
 import Header from "./Header";
@@ -11,13 +15,16 @@ import {
   checkValidEmail,
   checkValidPassword,
 } from "../utils/validate";
-import { auth } from "../utils/firebase";
+
+import { addUser } from "../redux/slice/userSlice";
 
 const Login = () => {
   const [isSignUpForm, setIsSignUpForm] = useState(false);
   const [errorMessageName, setErrorMessageName] = useState(null);
   const [errorMessageEmail, setErrorMessageEmail] = useState(null);
   const [errorMessagePassword, setErrorMessagePassword] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const name = useRef(null);
   const email = useRef(null);
@@ -26,8 +33,6 @@ const Login = () => {
   const handleSignInToggle = () => {
     setIsSignUpForm(!isSignUpForm);
   };
-
-  console.log(isSignUpForm);
 
   const handleFormData = () => {
     // Validate the form data
@@ -38,10 +43,6 @@ const Login = () => {
     setErrorMessageName(validName);
     setErrorMessageEmail(validEmail);
     setErrorMessagePassword(validPassword);
-
-    console.log(name?.current?.value);
-    console.log(email?.current?.value);
-    console.log(password?.current?.value);
 
     if (validName || validEmail || validPassword) return;
 
@@ -54,13 +55,30 @@ const Login = () => {
       )
         .then((userCredential) => {
           const user = userCredential.user;
-          console.log(user);
+          updateProfile(user, {
+            displayName: name?.current?.value,
+            photoURL:
+              "https://occ-0-6469-2186.1.nflxso.net/dnm/api/v6/K6hjPJd6cR6FpVELC5Pd6ovHRSk/AAAABY5cwIbM7shRfcXmfQg98cqMqiZZ8sReZnj4y_keCAHeXmG_SoqLD8SXYistPtesdqIjcsGE-tHO8RR92n7NyxZpqcFS80YfbRFz.png?r=229",
+          })
+            .then(() => {
+              const { uid, email, displayName, photoURL } = auth?.currentUser;
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                }),
+              );
+
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessagePassword(error?.message);
+            });
         })
         .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-
-          setErrorMessagePassword(errorCode + "-" + errorMessage);
+          setErrorMessagePassword(error?.code + "-" + error?.message);
         });
     } else {
       // Sign In logic
@@ -72,6 +90,7 @@ const Login = () => {
         .then((userCredential) => {
           const user = userCredential.user;
           console.log(user);
+          navigate("/browse");
         })
         .catch((error) => {
           const errorCode = error.code;
