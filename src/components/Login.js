@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { auth } from "../utils/firebase";
 import {
@@ -19,12 +18,11 @@ import {
 import { addUser } from "../redux/slice/userSlice";
 
 const Login = () => {
+  const dispatch = useDispatch();
   const [isSignUpForm, setIsSignUpForm] = useState(false);
   const [errorMessageName, setErrorMessageName] = useState(null);
   const [errorMessageEmail, setErrorMessageEmail] = useState(null);
   const [errorMessagePassword, setErrorMessagePassword] = useState(null);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const name = useRef(null);
   const email = useRef(null);
@@ -70,8 +68,6 @@ const Login = () => {
                   photoURL: photoURL,
                 }),
               );
-
-              navigate("/browse");
             })
             .catch((error) => {
               setErrorMessagePassword(error?.message);
@@ -89,8 +85,6 @@ const Login = () => {
       )
         .then((userCredential) => {
           const user = userCredential.user;
-          console.log(user);
-          navigate("/browse");
         })
         .catch((error) => {
           const errorCode = error.code;
